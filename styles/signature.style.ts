@@ -8,6 +8,7 @@ interface Styles {
   signatureContainer: ViewStyle;
   saveButton: ViewStyle;
   saveButtonText: TextStyle;
+  modalContainer: ViewStyle; 
 }
 
 // ✅ Styles React Native
@@ -18,6 +19,14 @@ const styles = StyleSheet.create<Styles>({
     padding: 20,
     justifyContent: 'center',
   },
+
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f1f5f9',
+    padding: 20,
+    justifyContent: 'center',
+  },
+
   logo: {
     width: 200,
     height: 80,

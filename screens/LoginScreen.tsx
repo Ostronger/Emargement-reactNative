@@ -7,11 +7,13 @@ import {
   Image,
 } from 'react-native';
 import styles from '../styles/login.styles';
+import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -52,7 +54,7 @@ export default function LoginScreen() {
         <Text style={styles.checkboxLabel}>Se souvenir de moi ?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity onPress={() => router.push('/acceuil')} style={styles.button}>
         <Text style={styles.buttonText}>Connexion</Text>
       </TouchableOpacity>
 
