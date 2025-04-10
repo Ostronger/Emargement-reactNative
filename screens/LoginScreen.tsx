@@ -54,7 +54,7 @@ export default function LoginScreen() {
         <Text style={styles.checkboxLabel}>Se souvenir de moi ?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/acceuil')} style={styles.button}>
+      <TouchableOpacity onPress={() => router.push('/Accueil')} style={styles.button}>
         <Text style={styles.buttonText}>Connexion</Text>
       </TouchableOpacity>
 

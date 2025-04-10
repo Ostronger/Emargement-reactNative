@@ -24,7 +24,7 @@ export default function FeuilleEmargementScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/profil')}>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/(tabs)/Profil')}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>AK</Text>
           </View>
@@ -34,7 +34,7 @@ export default function FeuilleEmargementScreen() {
 
       <View style={styles.rowBetween}>
         <Text style={styles.welcome}>Bonjour Apprenant</Text>
-        <TouchableOpacity style={styles.absenceBtn} onPress={() => router.push('/justificatif')}>
+        <TouchableOpacity style={styles.absenceBtn} onPress={() => router.push('/Accueil/justificatif')}>
           <Text style={styles.absenceBtnText}>Justifier une absence</Text>
         </TouchableOpacity>
       </View>
