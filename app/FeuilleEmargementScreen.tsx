@@ -12,13 +12,13 @@ export default function FeuilleEmargementScreen() {
   const ref = useRef<any>();
 
   const handleOK = (signature: string) => {
-    console.log('Signature capturée ✅', signature);
+    console.log('Signature capturée', signature);
     setShowModal(false);
-    Alert.alert('Signature sauvegardée ✅');
+    Alert.alert('Signature sauvegardée');
   };
 
   const handleEmpty = () => {
-    Alert.alert('Erreur', 'Signature vide ❌');
+    Alert.alert('Erreur', 'Signature vide');
   };
   
   return (

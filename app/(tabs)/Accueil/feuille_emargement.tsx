@@ -1,2 +1,2 @@
-import FeuilleEmargementScreen from '../../../screens/FeuilleEmargementScreen';
+import FeuilleEmargementScreen from '../../FeuilleEmargementScreen';
 export default FeuilleEmargementScreen;

@@ -1,2 +1,2 @@
-import PlanningApprenantScreen from '../../../screens/PlanningApprenantScreen';
+import PlanningApprenantScreen from '../../PlanningApprenantScreen';
 export default PlanningApprenantScreen;

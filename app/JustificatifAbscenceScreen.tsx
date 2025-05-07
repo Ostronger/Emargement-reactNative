@@ -44,7 +44,7 @@ export default function JustificatifAbsenceScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-         <TouchableOpacity style={styles.avatar} onPress={() => router.push('/profil')}>
+         <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
                   <View style={styles.avatar}>
                     <Text style={styles.avatarText}>AK</Text>
                   </View>
@@ -84,7 +84,7 @@ export default function JustificatifAbsenceScreen() {
           <Text style={styles.uploadBtnText}>{document ? document.name : 'Choisir un document'}</Text>
         </TouchableOpacity>
 
-        {/* ✅ Checkbox personnalisée */}
+        {/* Checkbox personnalisée */}
         <TouchableOpacity
           style={styles.checkboxContainer}
           onPress={() => setAccepted(!accepted)}

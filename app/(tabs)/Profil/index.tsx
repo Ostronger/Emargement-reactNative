@@ -1,2 +1,2 @@
-import ProfilApprenantScreen from '../../../screens/ProfilApprenantScreen';
+import ProfilApprenantScreen from '../../ProfilApprenantScreen';
 export default ProfilApprenantScreen;

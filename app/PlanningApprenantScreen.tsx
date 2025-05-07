@@ -7,9 +7,33 @@ import {
   Image,
   FlatList,
   ListRenderItem,
+  SafeAreaView,
 } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useRouter } from 'expo-router';
+
+
+LocaleConfig.locales['fr'] = {
+  monthNames: [
+    'Janvier',
+    'Février',
+    'Mars',
+    'Avril',
+    'Mai',
+    'Juin',
+    'Juillet',
+    'Août',
+    'Septembre',
+    'Octobre',
+    'Novembre',
+    'Décembre'
+  ],
+  monthNamesShort: ['Janv.', 'Févr.', 'Mars', 'Avril', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'],
+  dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+  dayNamesShort: ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'],
+  today: "Aujourd'hui"
+};
+LocaleConfig.defaultLocale = 'fr';
 
 type Course = {
   id: number;
@@ -39,7 +63,8 @@ export default function PlanningApprenantScreen() {
   );
 
   return (
-    <View style={styles.container}>
+  <SafeAreaView style={{ flex: 1 }}>
+    <View  style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
            <View style={styles.avatar}>
@@ -80,6 +105,7 @@ export default function PlanningApprenantScreen() {
         contentContainerStyle={{ paddingBottom: 20 }}
       />
     </View>
+    </SafeAreaView>
   );
 }
 

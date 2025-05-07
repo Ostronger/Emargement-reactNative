@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import styles from '../styles/login.styles';
+import styles from '../../styles/login.styles';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
@@ -18,7 +18,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../assets/images/gefor.jpg')}
+        source={require('../../assets/images/gefor.jpg')}
         style={styles.logo}
       />
 
@@ -43,7 +43,7 @@ export default function LoginScreen() {
         secureTextEntry
       />
 
-      {/* ✅ Checkbox custom */}
+      {/* Checkbox custom */}
       <TouchableOpacity
         style={styles.checkboxContainer}
         onPress={() => setRememberMe(!rememberMe)}
@@ -54,7 +54,7 @@ export default function LoginScreen() {
         <Text style={styles.checkboxLabel}>Se souvenir de moi ?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('/Accueil')} style={styles.button}>
+      <TouchableOpacity onPress={() => router.replace('/Accueil')} style={styles.button}>
         <Text style={styles.buttonText}>Connexion</Text>
       </TouchableOpacity>
 

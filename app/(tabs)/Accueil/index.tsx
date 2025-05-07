@@ -1,2 +1,2 @@
-import AccueilApprenantScreen from '../../../screens/AccueilApprenantScreen';
+import AccueilApprenantScreen from '../../AccueilApprenantScreen';
 export default AccueilApprenantScreen;

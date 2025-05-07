@@ -1,2 +1,2 @@
-import JustificatifAbsenceScreen from '../../../screens/JustificatifAbscenceScreen';
+import JustificatifAbsenceScreen from '../../JustificatifAbscenceScreen';
 export default JustificatifAbsenceScreen;
