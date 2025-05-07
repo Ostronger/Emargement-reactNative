@@ -41,7 +41,7 @@ export default function PlanningApprenantScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/profil')}>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
            <View style={styles.avatar}>
               <Text style={styles.avatarText}>AK</Text>
             </View>
@@ -56,10 +56,13 @@ export default function PlanningApprenantScreen() {
         markedDates={{
           [selectedDate]: {
             selected: true,
-            selectedColor: '#E85421',
+            selectedColor: '#0E1E5B',
+            marked: true,
+            dotColor: '#E85421',
           },
         }}
         theme={{
+          calendarBackground: '#E85421',
           selectedDayBackgroundColor: '#E85421',
           todayTextColor: '#E85421',
           arrowColor: '#E85421',

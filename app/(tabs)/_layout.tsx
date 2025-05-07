@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 
 
 export default function RootLayout() {
@@ -7,17 +7,17 @@ export default function RootLayout() {
     <Tabs
     screenOptions={({ route }) => ({
       tabBarIcon: ({ focused, color, size }) => {
-        let iconName: keyof typeof Ionicons.glyphMap = 'home';
+        let iconName: keyof typeof FontAwesome.glyphMap = 'home';
 
-        if (route.name === 'acceuil') {
-          iconName = focused ? 'home' : 'home-outline';
-        } else if (route.name === 'planning') {
-          iconName = focused ? 'calendar' : 'calendar-outline';
-        } else if (route.name === 'profil') {
-          iconName = focused ? 'person' : 'person-outline';
+        if (route.name === 'Acceuil') {
+          iconName = focused ? 'home' : 'home';
+        } else if (route.name === 'Planning') {
+          iconName = focused ? 'calendar' : 'calendar';
+        } else if (route.name === 'Profil') {
+          iconName = focused ? 'user' : 'user';
         }
 
-        return <Ionicons name={iconName} size={size} color={color} />;
+        return <FontAwesome name={iconName} size={size} color={color} />;
       },
       tabBarActiveTintColor: '#0E1E5B',
       tabBarInactiveTintColor: '#777',
