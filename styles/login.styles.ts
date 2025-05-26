@@ -1,6 +1,7 @@
 import { StyleSheet, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 
 interface Styles {
+  buttonDisabled: ViewStyle;
   container: ViewStyle;
   logo: ImageStyle;
   label: TextStyle;
@@ -84,4 +85,8 @@ export default StyleSheet.create<Styles>({
     color: '#f26522',
     textAlign: 'center',
   },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  
 });
