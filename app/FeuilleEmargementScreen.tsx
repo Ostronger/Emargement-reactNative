@@ -9,7 +9,7 @@ export default function FeuilleEmargementScreen() {
   const router = useRouter();
 
   const [showModal, setShowModal] = useState(false);
-  const ref = useRef<any>();
+  const ref = useRef<any>(null);
 
   const handleOK = (signature: string) => {
     console.log('Signature capturée', signature);
