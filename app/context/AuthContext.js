@@ -1,10 +1,11 @@
-// context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/apiService';
 
+// 1. Création du contexte
 const AuthContext = createContext();
 
+// 2. Hook personnalisé pour utiliser le contexte dans les composants
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -13,20 +14,21 @@ export const useAuth = () => {
   return context;
 };
 
+// 3. Provider qui englobe toute l'appli pour fournir le contexte à tous les composants enfants
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null); // Utilisateur connecté
+  const [loading, setLoading] = useState(true); // Chargement du contexte
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Statut de connexion
 
-  // Vérification de l'authentification au démarrage de l'app
+  // 4. Vérification de l'authentification à l'ouverture de l'appli
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
+  // 5. Fonction pour vérifier si l'utilisateur est déjà connecté (données stockées en local)
   const checkAuthStatus = async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
-      
       if (userData) {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
@@ -40,44 +42,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 6. Fonction de connexion (envoie username/password à l'API)
   const login = async (username, password) => {
     try {
       setLoading(true);
-      console.log('Tentative de connexion pour:', username);
-      
       const response = await authService.login(username, password);
-      
       if (response.success) {
-        // Stockage des données utilisateur dans AsyncStorage
         await AsyncStorage.setItem('userData', JSON.stringify(response.user));
-        
         setUser(response.user);
         setIsAuthenticated(true);
-        
-        console.log('Connexion réussie pour:', response.user.username);
         return { success: true, user: response.user };
       } else {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error('Erreur de connexion:', error);
       return { success: false, message: error.message };
     } finally {
       setLoading(false);
     }
   };
 
+  // 7. Fonction de déconnexion (supprime les infos locales)
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('userData');
       setUser(null);
       setIsAuthenticated(false);
-      console.log('Déconnexion réussie');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
     }
   };
 
+  // 8. Valeur du contexte fournie à tous les enfants
   const value = {
     user,
     isAuthenticated,
@@ -86,6 +82,7 @@ export const AuthProvider = ({ children }) => {
     logout,
   };
 
+  // 9. Fourniture du contexte à tous les composants enfants
   return (
     <AuthContext.Provider value={value}>
       {children}
