@@ -1,11 +1,13 @@
+// context/AuthContext.js
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/apiService';
 
-// 1. Création du contexte
+// Création du contexte
 const AuthContext = createContext();
 
-// 2. Hook personnalisé pour utiliser le contexte dans les composants
+// Hook personnalisé pour utiliser le contexte facilement
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -14,18 +16,17 @@ export const useAuth = () => {
   return context;
 };
 
-// 3. Provider qui englobe toute l'appli pour fournir le contexte à tous les composants enfants
+// Provider global pour gérer l'utilisateur connecté
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Utilisateur connecté
-  const [loading, setLoading] = useState(true); // Chargement du contexte
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Statut de connexion
+  const [user, setUser] = useState(null); // utilisateur actuel
+  const [loading, setLoading] = useState(true); // état de chargement
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // statut de connexion
 
-  // 4. Vérification de l'authentification à l'ouverture de l'appli
+  // Vérifie à l'ouverture si un utilisateur est stocké localement
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  // 5. Fonction pour vérifier si l'utilisateur est déjà connecté (données stockées en local)
   const checkAuthStatus = async () => {
     try {
       const userData = await AsyncStorage.getItem('userData');
@@ -33,20 +34,20 @@ export const AuthProvider = ({ children }) => {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
         setIsAuthenticated(true);
-        console.log('Utilisateur trouvé dans le stockage:', parsedUser);
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification de l\'authentification:', error);
+      console.error('Erreur lors de la vérification de l\'auth:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 6. Fonction de connexion (envoie username/password à l'API)
+  // Fonction de connexion
   const login = async (username, password) => {
     try {
       setLoading(true);
       const response = await authService.login(username, password);
+
       if (response.success) {
         await AsyncStorage.setItem('userData', JSON.stringify(response.user));
         setUser(response.user);
@@ -62,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 7. Fonction de déconnexion (supprime les infos locales)
+  // Déconnexion : supprime les données locales
   const logout = async () => {
     try {
       await AsyncStorage.removeItem('userData');
@@ -73,18 +74,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 8. Valeur du contexte fournie à tous les enfants
-  const value = {
-    user,
-    isAuthenticated,
-    loading,
-    login,
-    logout,
-  };
-
-  // 9. Fourniture du contexte à tous les composants enfants
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

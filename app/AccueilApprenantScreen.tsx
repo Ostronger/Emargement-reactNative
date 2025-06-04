@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,67 +6,89 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { apprenantService } from './services/apiService';
+import { useAuth } from './context/AuthContext'; 
 
 
 export default function AccueilApprenantScreen() {
   const router = useRouter();
-  
+  const [cours, setCours] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth(); // pour accéder à l'utilisateur
+
+  useEffect(() => {
+    fetchCours();
+  }, []);
+
+  const fetchCours = async () => {
+    try {
+      const response = await apprenantService.getCoursApprenant();
+      setCours(response.data); // attendu sous clé 'data'
+    } catch (error) {
+      Alert.alert('Erreur', error.message || 'Impossible de charger les cours');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const getInitiales = () => {
+  if (!user) return '??';
+  const prenom = user.firstname?.[0] || '';
+  const nom = user.lastname?.[0] || '';
+  return `${prenom}${nom}`.toUpperCase();
+};
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-      <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>AK</Text>
-        </View>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
+          <Text style={styles.avatarText}>{getInitiales()}</Text>
+
         </TouchableOpacity>
         <Image source={require('../assets/images/gefor.jpg')} style={styles.logo} />
       </View>
 
       <View style={styles.rowBetween}>
         <Text style={styles.welcome}>Bonjour Apprenant</Text>
-        <TouchableOpacity style={styles.absenceBtn} onPress={() => router.push('/Accueil/justificatif')}>
+        <TouchableOpacity
+          style={styles.absenceBtn}
+          onPress={() => router.push('/Accueil/justificatif')}
+        >
           <Text style={styles.absenceBtnText}>Justifier une absence</Text>
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>Emargement</Text>
+      <Text style={styles.sectionTitle}>Mes cours à venir</Text>
 
       <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.subTitle}>Aujourd'hui - Après-midi (2)</Text>
-        
-        <TouchableOpacity onPress={() => router.push('/Accueil/feuille_emargement')}>
-          <View style={styles.cardRed}>
-            <Ionicons name="book" size={16} color="red" />
-            <Text style={styles.cardText}>Anglais salle C</Text>
-            <Text style={styles.cardTime}>17h15 - 18h00</Text>
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.card}>
-          <Ionicons name="book" size={16} color="#0E1E5B" />
-          <Text style={styles.cardText}>Cejm salle B</Text>
-          <Text style={styles.cardTime}>18h00 - 19h00</Text>
-        </View>
-
-        <Text style={styles.subTitle}>Passés - (2)</Text>
-
-        <View style={[styles.card, styles.pastCard]}>
-          <Text style={styles.cardText}>Anglais salle C</Text>
-          <Text style={styles.cardTime}>17h15 - 18h00</Text>
-        </View>
-
-        <View style={[styles.card, styles.pastCard]}>
-          <Text style={styles.cardText}>Cejm salle B</Text>
-          <Text style={styles.cardTime}>18h00 - 19h00</Text>
-        </View>
+        {loading ? (
+          <ActivityIndicator size="large" color="#0E1E5B" />
+        ) : cours.length === 0 ? (
+          <Text style={styles.subTitle}>Aucun cours trouvé.</Text>
+        ) : (
+          cours.map((item: any) => (
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => router.push('/Accueil/feuille_emargement')}
+            >
+              <View style={styles.card}>
+                <Ionicons name="book" size={16} color="#0E1E5B" />
+                <Text style={styles.cardText}>{item.titre}</Text>
+                <Text style={styles.cardTime}>{item.horaire}</Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
     </View>
   );
 }
 
+// ... styles restent identiques (repris depuis ta version actuelle)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -145,14 +167,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  cardRed: {
-    backgroundColor: '#fff',
-    borderLeftWidth: 4,
-    borderLeftColor: 'red',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
   cardText: {
     fontWeight: '600',
     fontSize: 14,
@@ -161,8 +175,4 @@ const styles = StyleSheet.create({
     color: '#6C757D',
     marginTop: 4,
   },
-  pastCard: {
-    opacity: 0.5,
-  },
-},
-);
+});
