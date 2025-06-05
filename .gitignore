@@ -39,3 +39,19 @@ app-example
 
 .env
 
+# Tests
+__tests__/
+*.test.*
+*.spec.*
+coverage/
+
+# React Native (si dans même repo)
+.expo-shared/
+*.apk
+*.keystore
+
+# Logs & IDE
+/log/
+/*.log
+.idea/
+.vscode/
