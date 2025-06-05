@@ -1,6 +1,6 @@
 // services/apiService.js
 
-const API_BASE_URL = 'https://45d3-2a01-e0a-217-2e80-11db-eb18-cd64-8ac4.ngrok-free.app';
+const API_BASE_URL = 'https://1358-2a01-e0a-217-2e80-d855-86cf-4fa7-a44f.ngrok-free.app/';
 
 // Headers utilisés pour toutes les requêtes
 const defaultHeaders = {
