@@ -84,4 +84,11 @@ export default StyleSheet.create<Styles>({
     color: '#f26522',
     textAlign: 'center',
   },
+
+  title: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  textAlign: 'center',
+  marginBottom: 20,
+},
 });

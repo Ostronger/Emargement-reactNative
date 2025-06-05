@@ -1,26 +1,83 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import SignatureScreen from 'react-native-signature-canvas';
-import signatureStyles, { signatureWebStyle } from '../styles/signature.style'; // si tu l'utilises
+import signatureStyles, { signatureWebStyle } from '../styles/signature.style';
 
 export default function FeuilleEmargementScreen() {
   const router = useRouter();
+  const { sessionId } = useLocalSearchParams();
 
   const [showModal, setShowModal] = useState(false);
+  const [session, setSession] = useState<any>(null);
   const ref = useRef<any>(null);
 
-  const handleOK = (signature: string) => {
-    console.log('Signature capturée', signature);
-    setShowModal(false);
-    Alert.alert('Signature sauvegardée');
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const res = await fetch(`${apiUrl}/api/apprenant/signature/${sessionId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+
+        const data = await res.json();
+        setSession(data);
+      } catch (err) {
+        Alert.alert("Erreur", "Impossible de charger les données.");
+      }
+    };
+
+    if (sessionId) fetchSession();
+  }, [sessionId]);
+
+  const handleOK = async (signature: string) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const res = await fetch(`${apiUrl}/api/apprenant/signature/${sessionId}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ signatureData: signature }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        Alert.alert('Succès', result.message || 'Signature enregistrée');
+        setSession({ ...session, alreadySigned: true });
+      } else {
+        Alert.alert('Erreur', result.message || 'Échec de la signature');
+      }
+    } catch (err) {
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l’envoi de la signature.');
+    } finally {
+      setShowModal(false);
+    }
   };
 
   const handleEmpty = () => {
     Alert.alert('Erreur', 'Signature vide');
   };
-  
+
+  if (!session) {
+    return (
+      <View style={styles.container}>
+        <Text>Chargement...</Text>
+      </View>
+    );
+  }
+
+  const { active, alreadySigned, formation, salle, horaire, formateur } = session;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -39,18 +96,35 @@ export default function FeuilleEmargementScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>ANGLAIS</Text>
+      <Text style={styles.sectionTitle}>{formation}</Text>
 
       <View style={styles.card}>
         <Ionicons name="book" size={16} color="#0E1E5B" />
-        <Text style={styles.cardText}>Anglais salle C</Text>
-        <Text style={styles.cardTime}>17h15 - 18h00</Text>
+        <Text style={styles.cardText}>{formation} - {salle}</Text>
+        <Text style={styles.cardTime}>{horaire}</Text>
         <Text style={styles.cardProf}>👤 Intervenant</Text>
-        <Text style={styles.profName}>Nom prof</Text>
+        <Text style={styles.profName}>{formateur}</Text>
       </View>
 
-      <TouchableOpacity style={styles.signBtn} onPress={() => setShowModal(true)}>
-        <Text style={styles.signBtnText}>Signer</Text>
+      <TouchableOpacity
+        style={[
+          styles.signBtn,
+          (!active || alreadySigned) && styles.signBtnDisabled
+        ]}
+        onPress={() => {
+          if (alreadySigned) {
+            Alert.alert("Déjà signé", "Vous avez déjà signé cette session.");
+          } else if (!active) {
+            Alert.alert("Session inactive", "La session n’est pas encore active.");
+          } else {
+            setShowModal(true);
+          }
+        }}
+        disabled={!active || alreadySigned}
+      >
+        <Text style={styles.signBtnText}>
+          {alreadySigned ? 'Déjà signé' : active ? 'Signer' : 'Session inactive'}
+        </Text>
       </TouchableOpacity>
 
       <Modal visible={showModal} animationType="slide">
@@ -65,10 +139,7 @@ export default function FeuilleEmargementScreen() {
               webStyle={signatureWebStyle}
             />
           </View>
-          <TouchableOpacity
-            style={signatureStyles.saveButton}
-            onPress={() => ref.current?.readSignature()}
-          >
+          <TouchableOpacity style={signatureStyles.saveButton} onPress={() => ref.current?.readSignature()}>
             <Text style={signatureStyles.saveButtonText}>Sauvegarder</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setShowModal(false)}>
@@ -179,4 +250,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+
+  signBtnDisabled: {
+  backgroundColor: '#ccc',
+},
 });
