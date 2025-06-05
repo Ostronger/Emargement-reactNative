@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,25 +9,69 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User, Session } from '../types/types';
 
 export default function AccueilApprenantScreen() {
   const router = useRouter();
-  
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  const [user, setUser] = useState<User | null>(null);
+  const [coursAujourdhui, setCoursAujourdhui] = useState<Session[]>([]);
+  const [coursPasses, setCoursPasses] = useState<Session[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        const userData = await AsyncStorage.getItem('user');
+        const parsedUser = userData ? JSON.parse(userData) : null;
+        setUser(parsedUser);
+
+        const response = await fetch(`${apiUrl}/api/apprenant/dashboard`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        setCoursAujourdhui(data.cours_aujourdhui || []);
+        setCoursPasses(data.cours_passes || []);
+      } catch (error) {
+        console.error('Erreur lors du chargement du dashboard:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const getInitiales = () => {
+    if (!user) return '??';
+    const prenom = user.firstname?.charAt(0) || '';
+    const nom = user.lastname?.charAt(0) || '';
+    return `${prenom}${nom}`.toUpperCase();
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-      <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>AK</Text>
-        </View>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{getInitiales()}</Text>
+          </View>
         </TouchableOpacity>
         <Image source={require('../assets/images/gefor.jpg')} style={styles.logo} />
       </View>
 
       <View style={styles.rowBetween}>
-        <Text style={styles.welcome}>Bonjour Apprenant</Text>
-        <TouchableOpacity style={styles.absenceBtn} onPress={() => router.push('/Accueil/justificatif')}>
+        <Text style={styles.welcome}>
+          Bonjour {user?.firstname ?? 'Apprenant'}
+        </Text>
+        <TouchableOpacity
+          style={styles.absenceBtn}
+          onPress={() => router.push('/Accueil/justificatif')}
+        >
           <Text style={styles.absenceBtnText}>Justifier une absence</Text>
         </TouchableOpacity>
       </View>
@@ -35,33 +79,34 @@ export default function AccueilApprenantScreen() {
       <Text style={styles.sectionTitle}>Emargement</Text>
 
       <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.subTitle}>Aujourd'hui - Après-midi (2)</Text>
-        
-        <TouchableOpacity onPress={() => router.push('/Accueil/feuille_emargement')}>
-          <View style={styles.cardRed}>
-            <Ionicons name="book" size={16} color="red" />
-            <Text style={styles.cardText}>Anglais salle C</Text>
-            <Text style={styles.cardTime}>17h15 - 18h00</Text>
+        <Text style={styles.subTitle}>Aujourd'hui ({coursAujourdhui.length})</Text>
+        {coursAujourdhui.map((cours, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() =>
+              router.push({
+                pathname: '/Accueil/feuille_emargement',
+                params: { sessionId: cours.id.toString() },
+              })
+            }
+          >
+            <View style={styles.cardRed}>
+              <Ionicons name="book" size={16} color="red" />
+              <Text style={styles.cardText}>
+                {cours.formation} - salle : {cours.salle}
+              </Text>
+              <Text style={styles.cardTime}>{cours.horaire}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+
+        <Text style={styles.subTitle}>Passés - ({coursPasses.length})</Text>
+        {coursPasses.map((cours, index) => (
+          <View key={index} style={[styles.card, styles.pastCard]}>
+            <Text style={styles.cardText}>{cours.formation}</Text>
+            <Text style={styles.cardTime}>{cours.horaire}</Text>
           </View>
-        </TouchableOpacity>
-
-        <View style={styles.card}>
-          <Ionicons name="book" size={16} color="#0E1E5B" />
-          <Text style={styles.cardText}>Cejm salle B</Text>
-          <Text style={styles.cardTime}>18h00 - 19h00</Text>
-        </View>
-
-        <Text style={styles.subTitle}>Passés - (2)</Text>
-
-        <View style={[styles.card, styles.pastCard]}>
-          <Text style={styles.cardText}>Anglais salle C</Text>
-          <Text style={styles.cardTime}>17h15 - 18h00</Text>
-        </View>
-
-        <View style={[styles.card, styles.pastCard]}>
-          <Text style={styles.cardText}>Cejm salle B</Text>
-          <Text style={styles.cardTime}>18h00 - 19h00</Text>
-        </View>
+        ))}
       </ScrollView>
     </View>
   );

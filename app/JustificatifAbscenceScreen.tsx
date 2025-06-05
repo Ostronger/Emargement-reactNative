@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,103 +6,150 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { DocumentPickerAsset } from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function JustificatifAbsenceScreen() {
-  const [justification, setJustification] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const [motifDetails, setMotifDetails] = useState('');
+  const [sessionsPassees, setSessionsPassees] = useState<any[]>([]);
+  const [sessionsFutures, setSessionsFutures] = useState<any[]>([]);
+  const [selectedPassees, setSelectedPassees] = useState<number[]>([]);
+  const [selectedFutures, setSelectedFutures] = useState<number[]>([]);
   const [document, setDocument] = useState<DocumentPickerAsset | null>(null);
   const [accepted, setAccepted] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    const fetchSessions = async () => {
+      const token = await AsyncStorage.getItem('token');
+      const res = await fetch(`${apiUrl}/api/apprenant/absence/sessions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSessionsPassees(data.sessionsPassees);
+        setSessionsFutures(data.sessionsFutures);
+      }
+    };
+
+    fetchSessions();
+  }, []);
+
   const handlePickDocument = async () => {
     const result = await DocumentPicker.getDocumentAsync({});
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const file = result.assets[0];
-      setDocument(file);
+    if (!result.canceled && result.assets?.length > 0) {
+      setDocument(result.assets[0]);
     }
   };
 
-  const handleSubmit = () => {
-    if (justification && startDate && endDate && document && accepted) {
-      console.log('Formulaire envoyé avec :', {
-        justification,
-        startDate,
-        endDate,
-        document,
+  const toggleSelection = (id: number, type: 'passee' | 'future') => {
+    const setter = type === 'passee' ? setSelectedPassees : setSelectedFutures;
+    const selected = type === 'passee' ? selectedPassees : selectedFutures;
+    setter(selected.includes(id) ? selected.filter(i => i !== id) : [...selected, id]);
+  };
+
+  const handleSubmit = async () => {
+    if (!motifDetails || !document || !accepted || (selectedPassees.length + selectedFutures.length) === 0) {
+      Alert.alert('Veuillez remplir tous les champs, sélectionner au moins une session et accepter les conditions.');
+      return;
+    }
+
+    const token = await AsyncStorage.getItem('token');
+    const formData = new FormData();
+    selectedPassees.forEach(id => formData.append('sessionsPassees[]', id.toString()));
+    selectedFutures.forEach(id => formData.append('sessionsFutures[]', id.toString()));
+    formData.append('motifDetails', motifDetails);
+    formData.append('document', {
+      uri: document.uri,
+      name: document.name,
+      type: document.mimeType || 'application/pdf',
+    } as any);
+
+    try {
+      const res = await fetch(`${apiUrl}/api/apprenant/justifier-absence`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
       });
-    } else {
-      alert('Veuillez remplir tous les champs et accepter les conditions.');
+
+      const json = await res.json();
+      if (json.success) {
+        Alert.alert('Justification envoyée avec succès');
+        router.push('/Planning');
+      } else {
+        Alert.alert('Erreur', json.message || 'Erreur lors de l’envoi.');
+      }
+    } catch (e: any) {
+      Alert.alert('Erreur réseau', e.message);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
-         <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>AK</Text>
-                  </View>
-                </TouchableOpacity>
+        <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
+          <Text style={styles.avatarText}>AK</Text>
+        </TouchableOpacity>
         <Image source={require('../assets/images/gefor.jpg')} style={styles.logo} />
       </View>
 
       <Text style={styles.pageTitle}>Justifier une absence</Text>
 
       <View style={styles.card}>
-        <Text style={styles.description}>
-          La demande de justification sera envoyée à un administrateur pour validation.
-        </Text>
+        <Text style={styles.description}>Sélectionnez les sessions concernées :</Text>
+
+        <Text style={styles.sectionTitle}>Absences passées</Text>
+        {sessionsPassees.map(session => (
+          <TouchableOpacity
+            key={session.id}
+            onPress={() => toggleSelection(session.id, 'passee')}
+            style={[
+              styles.sessionItem,
+              selectedPassees.includes(session.id) && styles.selectedItem,
+            ]}
+          >
+            <Text>{session.formation} - {session.date}</Text>
+          </TouchableOpacity>
+        ))}
+
+        <Text style={styles.sectionTitle}>Absences futures</Text>
+        {sessionsFutures.map(session => (
+          <TouchableOpacity
+            key={session.id}
+            onPress={() => toggleSelection(session.id, 'future')}
+            style={[
+              styles.sessionItem,
+              selectedFutures.includes(session.id) && styles.selectedItem,
+            ]}
+          >
+            <Text>{session.formation} - {session.date}</Text>
+          </TouchableOpacity>
+        ))}
 
         <TextInput
-          placeholder="Justification"
+          placeholder="Détails de la justification"
           style={styles.input}
-          value={justification}
-          onChangeText={setJustification}
-        />
-
-        <TextInput
-          placeholder="Date de début"
-          style={styles.input}
-          value={startDate}
-          onChangeText={setStartDate}
-        />
-
-        <TextInput
-          placeholder="Date de fin"
-          style={styles.input}
-          value={endDate}
-          onChangeText={setEndDate}
+          value={motifDetails}
+          onChangeText={setMotifDetails}
         />
 
         <TouchableOpacity style={styles.uploadBtn} onPress={handlePickDocument}>
           <Text style={styles.uploadBtnText}>{document ? document.name : 'Choisir un document'}</Text>
         </TouchableOpacity>
 
-        {/* Checkbox personnalisée */}
-        <TouchableOpacity
-          style={styles.checkboxContainer}
-          onPress={() => setAccepted(!accepted)}
-        >
-          <View style={{
-            width: 20,
-            height: 20,
-            borderWidth: 2,
-            borderColor: '#f26522',
-            backgroundColor: accepted ? '#f26522' : '#fff',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: 10,
-          }}>
-            {accepted && <Text style={{ color: '#fff', fontWeight: 'bold' }}>✓</Text>}
-          </View>
+        <TouchableOpacity style={styles.checkboxContainer} onPress={() => setAccepted(!accepted)}>
+          <View style={accepted ? styles.checkboxChecked : styles.checkbox} />
           <Text style={styles.termsText}>
-            En validant votre demande de justification d'absence, vous acceptez que vos données puissent être stockées pour la durée maximale légale de conservation. Vos données seront traitées dans le cadre du service proposé par GEFOR à l'organisation à laquelle vous appartenez, afin de justifier votre absence en formation.
+            En validant votre demande de justification d'absence, vous acceptez que vos données soient stockées...
           </Text>
         </TouchableOpacity>
 
@@ -110,7 +157,7 @@ export default function JustificatifAbsenceScreen() {
           <Text style={styles.submitText}>Envoyer un justificatif</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -211,5 +258,24 @@ const styles = StyleSheet.create({
   submitText: { 
     color: 'white', 
     fontWeight: 'bold' 
+  },
+
+  sectionTitle: { fontWeight: 'bold', marginTop: 10, marginBottom: 5 },
+  sessionItem: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginBottom: 5,
+  },
+  selectedItem: {
+    backgroundColor: '#e0e0e0',
+    borderColor: '#0E1E5B',
+  },
+  checkbox: {
+    width: 20, height: 20, borderWidth: 2, borderColor: '#f26522', marginRight: 10,
+  },
+  checkboxChecked: {
+    width: 20, height: 20, backgroundColor: '#f26522', marginRight: 10,
   },
 });
