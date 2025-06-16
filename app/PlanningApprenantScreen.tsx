@@ -17,7 +17,7 @@ LocaleConfig.locales['fr'] = {
   monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
   monthNamesShort: ['Janv.','Févr.','Mars','Avr.','Mai','Juin','Juil.','Août','Sept.','Oct.','Nov.','Déc.'],
   dayNames: ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'],
-  dayNamesShort: ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'],
+  dayNamesShort: ['L','M','M','J','V','S','D'],
   today: "Aujourd'hui"
 };
 LocaleConfig.defaultLocale = 'fr';
@@ -36,53 +36,70 @@ type Course = {
 };
 
 export default function PlanningApprenantScreen() {
-  const [selectedDate, setSelectedDate] = useState('');
+  const todayString = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(todayString);
   const [events, setEvents] = useState<{ [key: string]: Course[] }>({});
-  const [markedDates, setMarkedDates] = useState({});
   const router = useRouter();
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   useEffect(() => {
-  const today = new Date();
-  const year = today.getMonth() >= 8 ? today.getFullYear() : today.getFullYear() - 1;
-
-  const start = `${year}-09-01`;
-  const endDate = `${year + 1}-06-30`;
-
-  fetchPlanning(start, endDate);
-}, []);
+    const today = new Date();
+    const year = today.getMonth() >= 8 ? today.getFullYear() : today.getFullYear() - 1;
+    const start = `${year}-09-01`;
+    const endDate = `${year + 1}-06-30`;
+    fetchPlanning(start, endDate);
+  }, []);
 
   const fetchPlanning = async (start: string, end: string) => {
     try {
       const token = await AsyncStorage.getItem('token');
       const res = await fetch(`${apiUrl}/api/planning?start=${start}&end=${end}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const data: Course[] = await res.json();
-
       const grouped: { [key: string]: Course[] } = {};
-      const marks: any = {};
 
       data.forEach(event => {
         const date = event.start.split('T')[0];
         if (!grouped[date]) grouped[date] = [];
         grouped[date].push(event);
-        marks[date] = {
-          marked: true,
-          dotColor: '#E85421',
-          selected: selectedDate === date,
-          selectedColor: selectedDate === date ? '#0E1E5B' : undefined,
-        };
       });
 
       setEvents(grouped);
-      setMarkedDates(marks);
     } catch (error) {
       Alert.alert('Erreur', "Impossible de charger le planning.");
     }
+  };
+
+  const generateMarkedDates = () => {
+    const marks: any = {};
+
+    // Marquer les dates ayant des événements
+    Object.keys(events).forEach(date => {
+      marks[date] = {
+        marked: true,
+        dotColor: '#FFFFFF',
+      };
+    });
+
+    // Marquer le jour d'aujourd'hui avec surbrillance bleue si aucune date sélectionnée
+    marks[todayString] = {
+      selected: true,
+      selectedColor: '#0E1E5B',
+      selectedTextColor: '#FFFFFF',
+    };
+
+    // Si l'utilisateur sélectionne une date, on la surligne à la place de today
+    if (selectedDate !== todayString) {
+      marks[selectedDate] = {
+        selected: true,
+        selectedColor: '#0E1E5B',
+        selectedTextColor: '#FFFFFF',
+      };
+    }
+
+    return marks;
   };
 
   const formatTimeRange = (start: string, end: string): string => {
@@ -95,7 +112,7 @@ export default function PlanningApprenantScreen() {
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.avatar} onPress={() => router.push('/Profil')}>
+          <TouchableOpacity onPress={() => router.push('/Profil')}>
             <View style={styles.avatar}><Text style={styles.avatarText}>AK</Text></View>
           </TouchableOpacity>
           <Image source={require('../assets/images/gefor.jpg')} style={styles.logo} />
@@ -105,12 +122,17 @@ export default function PlanningApprenantScreen() {
 
         <Calendar
           onDayPress={(day) => setSelectedDate(day.dateString)}
-          markedDates={markedDates}
+          markedDates={generateMarkedDates()}
           theme={{
             calendarBackground: '#E85421',
-            selectedDayBackgroundColor: '#E85421',
-            todayTextColor: '#E85421',
-            arrowColor: '#E85421',
+            selectedDayBackgroundColor: '#0E1E5B',
+            todayTextColor: '#FFFFFF',
+            arrowColor: '#FFFFFF',
+            dayTextColor: '#FFFFFF',
+            textDisabledColor: '#999999',
+            monthTextColor: '#FFFFFF',
+            textMonthFontWeight: 'bold',
+            textDayFontWeight: 'bold',
           }}
         />
 
@@ -144,14 +166,14 @@ function formatDate(dateString: string): string {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 12 },
-  avatar: { backgroundColor: '#ccc', borderRadius: 20, padding: 10 },
-  avatarText: { color: 'white', fontWeight: 'bold' },
-  logo: { width: 100, height: 40 },
-  pageTitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 12 },
-  subTitle: { fontSize: 18, marginTop: 10, marginBottom: 6 },
-  courseCard: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 10 },
+  container: { flex: 1, paddingHorizontal: 16, backgroundColor: '#F4F4F4' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20 },
+  avatar: { backgroundColor: '#E85421', borderRadius: 50, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
+  avatarText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
+  logo: { width: 120, height: 50, resizeMode: 'contain' },
+  pageTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 12, marginLeft: 8 },
+  subTitle: { fontSize: 16, marginTop: 10, marginBottom: 6, marginLeft: 8 },
+  courseCard: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 10, marginHorizontal: 8, elevation: 2 },
   courseTitle: { fontSize: 16, fontWeight: 'bold' },
   courseTime: { color: '#555' },
   courseSalle: { color: '#333' },
