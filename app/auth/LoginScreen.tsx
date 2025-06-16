@@ -9,6 +9,7 @@ import {
 import styles from '../../styles/login.styles';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons'; // Ajout pour l'icône œil
 
 export default function LoginScreen() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -16,6 +17,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [secureText, setSecureText] = useState(true); // État pour masquer/afficher
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -23,7 +25,6 @@ export default function LoginScreen() {
       setErrorMessage("Veuillez remplir tous les champs");
       return;
     }
-
 
     try {
       const response = await fetch(`${apiUrl}/api/login`, {
@@ -44,7 +45,6 @@ export default function LoginScreen() {
         setErrorMessage('');
         console.log('Connexion réussie. Utilisateur :', data.user);
 
-        // ✅ Stockage du token et des infos utilisateur
         await AsyncStorage.setItem('token', data.token);
         await AsyncStorage.setItem('user', JSON.stringify(data.user));
 
@@ -76,14 +76,26 @@ export default function LoginScreen() {
       />
 
       <Text style={styles.label}>MOT DE PASSE</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Entrer votre mot de passe"
-        placeholderTextColor="#ccc"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+      <View style={{ position: 'relative' }}>
+        <TextInput
+          style={styles.input}
+          placeholder="Entrer votre mot de passe"
+          placeholderTextColor="#ccc"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={secureText}
+        />
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            right: 10,
+            top: 12,
+          }}
+          onPress={() => setSecureText(!secureText)}
+        >
+          <Ionicons name={secureText ? 'eye-off' : 'eye'} size={24} color="#ccc" />
+        </TouchableOpacity>
+      </View>
 
       {errorMessage !== '' && (
         <Text style={{ color: 'red', marginBottom: 10, textAlign: 'center' }}>
