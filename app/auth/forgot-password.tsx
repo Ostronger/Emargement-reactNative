@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import styles from '../../styles/login.styles';
 
-export default function ForgotPasswordScreen() {
+export default function ForgotPasswordScreen() { 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [message, setMessage] = useState('');
