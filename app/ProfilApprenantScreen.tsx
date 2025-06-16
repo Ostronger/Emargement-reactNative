@@ -39,8 +39,8 @@ export default function ProfilApprenantScreen() {
 
         setUsername(data.username);
         setEmail(data.email);
-        setNom(data.lastname);
-        setPrenom(data.firstname);
+        setPrenom(data?.prenom || '');
+        setNom(data?.nom || '');
         setLoading(false);
       } catch (error) {
         Alert.alert("Erreur", "Impossible de récupérer le profil.");
