@@ -12,6 +12,8 @@ import {
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User } from '../types/types';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
 LocaleConfig.locales['fr'] = {
   monthNames: ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'],
@@ -40,7 +42,21 @@ export default function PlanningApprenantScreen() {
   const [selectedDate, setSelectedDate] = useState(todayString);
   const [events, setEvents] = useState<{ [key: string]: Course[] }>({});
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const userData = await AsyncStorage.getItem("user");
+      const parsedUser = userData ? JSON.parse(userData) : null;
+      setUser(parsedUser);
+    };
+
+    loadUser();
+  }, []);
+
+  
 
   useEffect(() => {
     const today = new Date();
@@ -49,6 +65,8 @@ export default function PlanningApprenantScreen() {
     const endDate = `${year + 1}-06-30`;
     fetchPlanning(start, endDate);
   }, []);
+
+  
 
   const fetchPlanning = async (start: string, end: string) => {
     try {
@@ -108,18 +126,26 @@ export default function PlanningApprenantScreen() {
     return `${s.getHours()}h${s.getMinutes().toString().padStart(2, '0')} - ${e.getHours()}h${e.getMinutes().toString().padStart(2, '0')}`;
   };
 
+  const getInitiales = () => {
+    if (!user) return '??';
+    const prenom = user.firstname?.charAt(0) || '';
+    const nom = user.lastname?.charAt(0) || '';
+    return `${prenom}${nom}`.toUpperCase();
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push('/Profil')}>
-            <View style={styles.avatar}><Text style={styles.avatarText}>AK</Text></View>
+            <View style={styles.avatar}><Text style={styles.avatarText}>{getInitiales()}</Text></View>
           </TouchableOpacity>
           <Image source={require('../assets/images/gefor.jpg')} style={styles.logo} />
         </View>
 
         <Text style={styles.pageTitle}>Planning</Text>
 
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, }}>
         <Calendar
           onDayPress={(day) => setSelectedDate(day.dateString)}
           markedDates={generateMarkedDates()}
@@ -135,7 +161,7 @@ export default function PlanningApprenantScreen() {
             textDayFontWeight: 'bold',
           }}
         />
-
+</View>
         <Text style={styles.subTitle}>
           {selectedDate ? formatDate(selectedDate) : "Sélectionnez une date"} ({events[selectedDate]?.length || 0})
         </Text>
@@ -145,14 +171,23 @@ export default function PlanningApprenantScreen() {
           keyExtractor={(item) => item.eventId.toString()}
           renderItem={({ item }) => (
             <View style={styles.courseCard}>
-              <Text style={styles.courseTitle}>{item.title}</Text>
-              <Text style={styles.courseTime}>{formatTimeRange(item.start, item.end)}</Text>
-              <Text style={styles.courseSalle}>📍 {item.salle}</Text>
-              <Text style={styles.courseProf}>👤 {item.extendedProps.formateur}</Text>
-              {item.extendedProps.justification && (
-                <Text style={styles.justification}>{item.extendedProps.justification}</Text>
-              )}
-            </View>
+  <Text style={styles.courseTitle}>{item.title}</Text>
+  <Text style={styles.courseTime}>{formatTimeRange(item.start, item.end)}</Text>
+
+  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+    <FontAwesome name="map-marker" size={16} color="#E85421" style={{ marginRight: 6 }} />
+    <Text style={styles.courseSalle}>{item.salle}</Text>
+  </View>
+
+  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+    <FontAwesome5 name="user" size={16} color="#0E1E5B" style={{ marginRight: 6 }} />
+    <Text style={styles.courseProf}>{item.extendedProps.formateur}</Text>
+  </View>
+
+  {item.extendedProps.justification && (
+    <Text style={styles.justification}>{item.extendedProps.justification}</Text>
+  )}
+</View>
           )}
         />
       </View>
@@ -166,17 +201,81 @@ function formatDate(dateString: string): string {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16, backgroundColor: '#F4F4F4' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20 },
-  avatar: { backgroundColor: '#E85421', borderRadius: 50, width: 50, height: 50, justifyContent: 'center', alignItems: 'center' },
-  avatarText: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-  logo: { width: 120, height: 50, resizeMode: 'contain' },
-  pageTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 12, marginLeft: 8 },
-  subTitle: { fontSize: 16, marginTop: 10, marginBottom: 6, marginLeft: 8 },
-  courseCard: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 10, marginHorizontal: 8, elevation: 2 },
-  courseTitle: { fontSize: 16, fontWeight: 'bold' },
-  courseTime: { color: '#555' },
-  courseSalle: { color: '#333' },
-  courseProf: { color: '#333' },
-  justification: { marginTop: 5, fontStyle: 'italic', color: '#E85421' },
+  container: {
+    flex: 1,
+    backgroundColor: "#F1F3F5",
+    paddingTop: 20,
+    gap: 10,
+  },
+   header: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 16,
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  avatar: {
+    backgroundColor: "#E85421",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  logo: {
+    width: 160,
+    height: 50,
+    resizeMode: "contain",
+  },
+  pageTitle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    alignItems: "center",
+    backgroundColor: "#fff",
+    paddingVertical: 17,
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  subTitle: {
+    fontSize: 16,
+    marginTop: 10,
+    marginBottom: 6,
+    marginLeft: 8,
+  },
+
+  courseCard: {
+    backgroundColor: '#fff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    marginHorizontal: 8,
+    elevation: 2,
+    paddingHorizontal: 16,
+  },
+  courseTitle: { 
+    fontSize: 16, 
+    fontWeight: 'bold',
+  },
+  
+  courseTime: { 
+    color: '#555', 
+  },
+  courseSalle: { 
+    color: '#333',
+  },
+  courseProf: { 
+    color: '#333',
+  },
+  justification: { 
+    marginTop: 5, 
+    fontStyle: 'italic', 
+    color: '#E85421', 
+  },
 });

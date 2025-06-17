@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: 'center',
      backgroundColor: '#fff',
-     paddingVertical: 12, 
+     paddingVertical: 12,  // Espace vertical pour le bouton
      marginTop: 12, 
   },
   welcome: {
