@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Animated,
+  Pressable,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, Session } from '../types/types';
@@ -19,6 +21,24 @@ export default function AccueilApprenantScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [coursAujourdhui, setCoursAujourdhui] = useState<Session[]>([]);
   const [coursPasses, setCoursPasses] = useState<Session[]>([]);
+
+   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,10 +99,17 @@ export default function AccueilApprenantScreen() {
       <Text style={styles.sectionTitle}>Emargement</Text>
 
       <ScrollView style={styles.scrollContainer}>
-        <Text style={styles.subTitle}>Aujourd'hui ({coursAujourdhui.length})</Text>
+        <Text style={styles.subTitle}>
+          Aujourd'hui - {' '}
+          <Text style={{ color: coursAujourdhui.length > 0 ? '#E85421' : '#6C757D' }}>
+            ({coursAujourdhui.length})
+          </Text>
+        </Text>
         {coursAujourdhui.map((cours, index) => (
-          <TouchableOpacity
+          <Pressable
             key={index}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
             onPress={() =>
               router.push({
                 pathname: '/Accueil/feuille_emargement',
@@ -90,20 +117,29 @@ export default function AccueilApprenantScreen() {
               })
             }
           >
-            <View style={styles.cardRed}>
-              <Ionicons name="book" size={16} color="red" />
-              <Text style={styles.cardText}>
-                {cours.formation} - salle : {cours.salle}
-              </Text>
+            <Animated.View style={[styles.cardRed, cours.active && styles.cardActive, { transform: [{ scale: scaleAnim }] },]}>
+              <View style={styles.cardRow}>
+                <FontAwesome5 name="book-open" size={20} color="#E85421" style={{ marginRight: 8 }} />
+                <Text style={styles.cardText}>
+                  {cours.formation} - salle : {cours.salle}
+                </Text>
+              </View>
               <Text style={styles.cardTime}>{cours.horaire}</Text>
-            </View>
-          </TouchableOpacity>
+            </Animated.View>
+          </Pressable>
         ))}
 
-        <Text style={styles.subTitle}>Passés - ({coursPasses.length})</Text>
+        <Text style={styles.subTitle}>
+          Passés - <Text style={{ color: '#6C757D' }}>({coursPasses.length})</Text>
+        </Text>
         {coursPasses.map((cours, index) => (
           <View key={index} style={[styles.card, styles.pastCard]}>
-            <Text style={styles.cardText}>{cours.formation}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <FontAwesome5 name="book" size={20} color="#6C757D" style={{ marginRight: 10 }} />
+              <Text style={{ fontSize: 14, color: '#212529', fontWeight: '600' }}>
+                {cours.formation}
+              </Text>
+            </View>
             <Text style={styles.cardTime}>{cours.horaire}</Text>
           </View>
         ))}
@@ -116,20 +152,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F1F3F5',
-    paddingTop: 40,
+    paddingTop: 20,
+    gap: 10,
   },
+
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'row', // Align items horizontally
+    justifyContent: 'center', // Center the items
+    gap: 16, // Space between items
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingBottom: 10,
   },
   avatar: {
     backgroundColor: '#E85421',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -138,8 +177,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   logo: {
-    width: 100,
-    height: 30,
+    width: 160,
+    height: 50,
     resizeMode: 'contain',
   },
   rowBetween: {
@@ -147,6 +186,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     alignItems: 'center',
+     backgroundColor: '#fff',
+     paddingVertical: 12, 
+     marginTop: 12, 
   },
   welcome: {
     fontWeight: 'bold',
@@ -158,17 +200,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    
   },
   absenceBtnText: {
     color: 'white',
     fontWeight: '600',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    fontSize: 14,            
   },
   sectionTitle: {
     backgroundColor: '#dee2e6',
-    padding: 10,
+    marginTop: 12, 
+    paddingVertical: 12, 
+    paddingHorizontal: 20,
     fontWeight: 'bold',
     color: '#212529',
     fontSize: 16,
+    textAlign: 'center',
   },
   scrollContainer: {
     paddingHorizontal: 20,
@@ -178,7 +227,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#212529',
     marginVertical: 10,
+    textAlign: 'center',
   },
+
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -191,16 +242,37 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardRed: {
-    backgroundColor: '#fff',
-    borderLeftWidth: 4,
-    borderLeftColor: 'red',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
+  backgroundColor: '#fff',
+  padding: 20, // augmenté
+  borderRadius: 16, // légèrement plus arrondi
+  marginBottom: 16, // plus d'espace entre les cartes
+  minHeight: 100, // pour les rendre plus grandes visuellement
+  justifyContent: 'center',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 4,
+},
   cardText: {
     fontWeight: '600',
     fontSize: 14,
+    marginTop: 10,
+  },
+
+  cardActive: {
+  borderColor: '#E85421', // léger orange clair
+  borderWidth: 2,
+},
+cardPressed: {
+  backgroundColor: '#f3f3f3',
+},
+
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    
   },
   cardTime: {
     color: '#6C757D',
